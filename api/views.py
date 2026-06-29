@@ -1,28 +1,56 @@
-from django.shortcuts import render
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
 from rest_framework.views import APIView
-from rest_framework import status
-from core.models import User, Job, Application
-from .serializers import JobSerializer
+from rest_framework.response import Response
+from apps.users.permissions import IsAdmin, IsEmployer
+from apps.users.models import User, EmployerProfile
+from apps.users.serializers import EmployerProfileSerializer
+from apps.jobs.models import Job
+from apps.applications.models import JobApplication
+from apps.applications.serializers import RecentApplicationSerializer
 
-# Create your views here.
-@api_view(['GET'])
-def homeView(request):
-    return Response("Hello Zecpath Backend")
+class AnalyticsView(APIView):
+    permission_classes = [IsAdmin]
 
-class JobView(APIView):
     def get(self, request):
-        jobs = Job.objects.all()
-        serializer = JobSerializer(jobs, many = True)
+        total_candidates = User.objects.filter(role='candidate').count()
+        total_employers = User.objects.filter(role='employer').count()
+        total_jobs = Job.objects.count()
+        total_applications = JobApplication.objects.count()
+
+        return Response({
+            'total_candidates': total_candidates,
+            'total_employers': total_employers,
+            'total_jobs': total_jobs,
+            'total_applications':total_applications
+        })
+
+class EmployersListView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        employers = EmployerProfile.objects.select_related('user').all()
+        serializer = EmployerProfileSerializer(employers, many=True)
         return Response(serializer.data)
 
-class JobCreateView(APIView):
-    def post(self, request):
-        serializer = JobSerializer(data = request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            print(serializer._errors)
-            return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)
+class EmployerAnalyticsView(APIView):
+    permission_classes = [IsEmployer]
+
+    def get(self, request):
+        employer_profile = request.user.employer_profile
+        total_jobs = Job.objects.filter(employer=employer_profile).count()
+        total_applications = JobApplication.objects.filter(job__employer=employer_profile).count()
+        total_shortlisted = JobApplication.objects.filter(job__employer=employer_profile, status='shortlisted').count()
+
+        return Response({
+            'total_jobs_posted': total_jobs,
+            'total_applications_received': total_applications,
+            'total_shortlisted_candidates': total_shortlisted
+        })
+
+class RecentApplicationsView(APIView):
+    permission_classes = [IsEmployer]
+
+    def get(self, request):
+        employer_profile = request.user.employer_profile
+        applications = JobApplication.objects.filter(job__employer=employer_profile).select_related('candidate__user', 'job').order_by('-applied_date')[:4]
+        serializer = RecentApplicationSerializer(applications, many=True)
+        return Response(serializer.data)
