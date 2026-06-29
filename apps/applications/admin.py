@@ -10,8 +10,11 @@ class ApplicationStatusLogAdmin(admin.ModelAdmin):
     list_display = ("application", "old_status", "new_status", "changed_by", "changed_at")
 
 @admin.register(AIInterviewSession)
-class ApplicationStatusLogAdmin(admin.ModelAdmin):
+class AIInterviewSessionAdmin(admin.ModelAdmin):
     list_display = ("id","candidate")
-admin.site.register(AIQuestion)
+
+@admin.register(AIQuestion)
+class AIQuestionAdmin(admin.ModelAdmin):
+    list_display = ("id","question_text","session")
 admin.site.register(AIAnswer)
 admin.site.register(CallLog)

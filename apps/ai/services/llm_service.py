@@ -56,7 +56,9 @@ class GeminiService:
                     response_mime_type="application/json",
                 ),
             )
-
+            print("\n========== GEMINI RESPONSE ==========")
+            print(response.text)
+            print("=====================================\n")
             return json.loads(response.text)
 
         except Exception as e:

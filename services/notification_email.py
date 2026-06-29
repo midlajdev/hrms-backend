@@ -1,12 +1,11 @@
 # notifications/services.py
-from celery import shared_task
+# from celery import shared_task
 from django.template.loader import render_to_string
 from django.core.mail import send_mail
 from django.conf import settings
 from apps.notifications.models import EmailLog
 from django.core.mail import EmailMessage
 
-@shared_task
 def send_notification(subject, template, context, email):
     try:
         message = render_to_string(template, context)
@@ -36,7 +35,7 @@ def send_notification(subject, template, context, email):
         )
 
 def notify_application_submitted(application):
-    send_notification.delay(
+    send_notification(
         subject="Application Submitted",
         template="emails/application_submitted.html",
         context={
@@ -51,7 +50,7 @@ def notify_application_submitted(application):
 
 
 def notify_shortlisted(application):
-    send_notification.delay(
+    send_notification(
         subject="You are shortlisted!",
         template="emails/shortlisted.html",
         context={
@@ -63,7 +62,7 @@ def notify_shortlisted(application):
 
 
 def notify_rejected(application):
-    send_notification.delay(
+    send_notification(
         subject="Application Update",
         template="emails/rejected.html",
         context={
@@ -74,7 +73,7 @@ def notify_rejected(application):
     )
 
 def notify_interview_scheduled(schedule):
-    send_notification.delay(
+    send_notification(
         subject="AI Interview Scheduled",
         template="emails/interview_scheduled.html",
         context={

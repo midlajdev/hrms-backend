@@ -35,7 +35,7 @@ def process_application(application):
         if application.status == 'shortlisted':
             notify_shortlisted(application)
             if is_candidate_eligible(application):
-                trigger_ai_call.delay(application.id)
+                trigger_ai_call(application.id)
                 
         elif application.status == 'rejected':
             notify_rejected(application)
